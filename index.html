@@ -37,6 +37,32 @@
             display: flex;
             flex-direction: column;
             padding: 15px;
+            gap: 10px;
+        }
+
+        #chat-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .chat-item {
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            background: transparent;
+            color: #ddd;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .chat-item:hover, .chat-item.active {
+            background-color: #2a2a2a;
+            color: #fff;
         }
 
         #main-content {
@@ -83,8 +109,16 @@
             overflow-y: auto;
             display: flex;
             flex-direction: column;
+            gap: 15px;
+        }
+
+        .welcome-container {
+            display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
+            height: 100%;
+            text-align: center;
         }
 
         .welcome-title {
@@ -94,6 +128,25 @@
 
         .welcome-sub {
             color: #aaa;
+        }
+
+        .message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            max-width: 75%;
+            line-height: 1.5;
+            word-break: break-word;
+        }
+
+        .message.user {
+            background-color: #2b5278;
+            align-self: flex-end;
+        }
+
+        .message.ai {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            align-self: flex-start;
         }
 
         #input-container {
@@ -180,31 +233,33 @@
 
     <div id="app-container">
         <div id="sidebar">
-            <button id="btn-new-chat" class="btn btn-primary" style="margin-bottom: 20px;">Yeni Sohbet</button>
-            <div style="flex: 1;"></div>
+            <button id="btn-new-chat" class="btn btn-primary" onclick="createNewChat()">Yeni Sohbet</button>
+            <div id="chat-list"></div>
             <button onclick="openSettingsModal()" class="btn">⚙️ Ayarlar</button>
         </div>
 
         <div id="main-content">
             <div class="top-bar">
                 <span id="current-lang-name">Türkçe</span>
-                <button class="btn" onclick="document.getElementById('auth-modal').style.display='flex'">Giriş Yap</button>
+                <button class="btn" id="btn-open-auth" onclick="document.getElementById('auth-modal').style.display='flex'">Giriş Yap</button>
             </div>
 
             <div id="chat-area">
-                <h2 class="welcome-title">Veltrix AI</h2>
-                <p id="welcome-sub-text" class="welcome-sub">Size nasıl yardımcı olabilirim?</p>
+                <div class="welcome-container" id="welcome-box">
+                    <h2 class="welcome-title">Veltrix AI</h2>
+                    <p id="welcome-sub-text" class="welcome-sub">Size nasıl yardımcı olabilirim?</p>
+                </div>
             </div>
 
             <div id="input-container">
                 <button class="btn" onclick="togglePlusMenu(event)">+</button>
                 <div id="plus-menu" class="plus-menu">
                     <div id="menu-gallery" class="plus-menu-item">Galeri</div>
-                    <div id="menu-camera" class="plus-menu-item">Kamera</div>
+                    <div id="menu-camera" class="plus-menu-item" onclick="document.getElementById('camera-modal').style.display='flex'">Kamera</div>
                 </div>
 
-                <input type="text" id="user-input" placeholder="Bir mesaj yazın...">
-                <button id="btn-send" class="btn btn-primary">Gönder</button>
+                <input type="text" id="user-input" placeholder="Bir mesaj yazın..." onkeydown="if(event.key==='Enter') sendMessage()">
+                <button id="btn-send" class="btn btn-primary" onclick="sendMessage()">Gönder</button>
             </div>
         </div>
     </div>
@@ -212,24 +267,13 @@
     <div id="auth-modal" class="modal">
         <div class="modal-content">
             <h3 id="modal-title">Giriş Yap / Kayıt Ol</h3>
-            
             <button id="btn-google" class="btn" style="background: #ffffff; color: #000; font-weight: bold;">
                 <span id="btn-google-text">Google ile Giriş Yap</span>
             </button>
-            
             <div style="text-align: center; color: #666; font-size: 12px;">veya</div>
-
             <input type="email" id="auth-email" placeholder="E-posta Adresi">
             <input type="password" id="auth-password" placeholder="Şifre">
             <button id="btn-submit-email" class="btn btn-primary">Devam Et</button>
-            <a href="#" id="back-email-link" style="color: #888; font-size: 12px; text-align: center;">Geri</a>
-
-            <hr style="border-color: var(--border-color); width: 100%;">
-
-            <button id="btn-phone" class="btn"><span id="btn-phone-text">Telefon ile Giriş Yap</span></button>
-            <span id="phone-soon-text" style="display:none; color: orange; font-size: 12px;">Pek Yakında!</span>
-            <a href="#" id="back-phone-link" style="display:none; color: #888; font-size: 12px; text-align: center;">Geri</a>
-
             <button class="btn" onclick="document.getElementById('auth-modal').style.display='none'">İptal</button>
         </div>
     </div>
@@ -298,14 +342,7 @@
                 settings: "Ayarlar",
                 settingsLang: "Uygulama Dili",
                 save: "Kaydet",
-                langLabel: "Lütfen uygulama dilini seçin:",
-                newChatDefault: "Yeni Chat",
-                msgLimit: "Mesaj limitine ulaştınız!",
-                connErr: "Sunucu ile bağlantı hatası.",
-                atLeastOneChat: "En az bir sohbet olmalı.",
-                deleteChatTitle: "Sohbeti Sil",
-                pinChatTitle: "Sabitle",
-                unpinChatTitle: "Sabitlemeyi Kaldır"
+                newChatDefault: "Yeni Sohbet"
             },
             es: {
                 langName: "Español",
@@ -330,18 +367,13 @@
                 settings: "Ajustes",
                 settingsLang: "Idioma de la Aplicación",
                 save: "Guardar",
-                langLabel: "Por favor seleccione el idioma de la aplicación:",
-                newChatDefault: "Nuevo Chat",
-                msgLimit: "¡Has alcanzado el límite de mensajes! Inicia sesión para uso ilimitado.",
-                connErr: "Error de conexión con el servidor.",
-                atLeastOneChat: "Debe haber al menos un chat.",
-                deleteChatTitle: "Eliminar chat",
-                pinChatTitle: "Fijar",
-                unpinChatTitle: "Desfijar"
+                newChatDefault: "Nuevo Chat"
             }
         };
 
         let currentLang = localStorage.getItem('app_lang') || 'tr';
+        let chats = [{ id: 1, title: 'Yeni Sohbet', messages: [] }];
+        let currentChatId = 1;
 
         function setSafeText(id, val) {
             const el = document.getElementById(id);
@@ -354,7 +386,7 @@
             }
         }
 
-        function applyLanguage(lang) {
+        window.applyLanguage = function(lang) {
             const t = translations[lang] || translations.tr;
             currentLang = lang;
             localStorage.setItem('app_lang', lang);
@@ -371,44 +403,105 @@
             setSafeText('cam-close-btn', t.cancel);
             setSafeText('modal-title', t.authTitle);
             setSafeText('btn-google-text', t.googleBtn);
-            setSafeText('btn-email-text', t.emailBtn);
-            setSafeText('btn-phone-text', t.phoneBtn);
             setSafeText('auth-email', t.emailPlaceholder);
             setSafeText('auth-password', t.passPlaceholder);
             setSafeText('btn-submit-email', t.submitEmail);
-            setSafeText('back-email-link', t.back);
-            setSafeText('back-phone-link', t.back);
-            setSafeText('phone-soon-text', t.phoneSoon);
             setSafeText('settings-title', t.settings);
             setSafeText('settings-lang-label', t.settingsLang);
             setSafeText('btn-settings-save', t.save);
             setSafeText('btn-settings-cancel', t.cancel);
         }
 
+        window.createNewChat = function() {
+            const t = translations[currentLang];
+            const newChat = { id: Date.now(), title: t.newChatDefault, messages: [] };
+            chats.push(newChat);
+            currentChatId = newChat.id;
+            renderChatList();
+            renderActiveChat();
+        };
+
+        window.renderChatList = function() {
+            const listEl = document.getElementById('chat-list');
+            listEl.innerHTML = '';
+            chats.forEach(chat => {
+                const div = document.createElement('div');
+                div.className = `chat-item ${chat.id === currentChatId ? 'active' : ''}`;
+                div.textContent = chat.title;
+                div.onclick = () => {
+                    currentChatId = chat.id;
+                    renderChatList();
+                    renderActiveChat();
+                };
+                listEl.appendChild(div);
+            });
+        };
+
+        window.renderActiveChat = function() {
+            const chatArea = document.getElementById('chat-area');
+            const chat = chats.find(c => c.id === currentChatId);
+            if (!chat || chat.messages.length === 0) {
+                const t = translations[currentLang];
+                chatArea.innerHTML = `
+                    <div class="welcome-container" id="welcome-box">
+                        <h2 class="welcome-title">Veltrix AI</h2>
+                        <p id="welcome-sub-text" class="welcome-sub">${t.welcomeSub}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            chatArea.innerHTML = '';
+            chat.messages.forEach(msg => {
+                const msgDiv = document.createElement('div');
+                msgDiv.className = `message ${msg.sender}`;
+                msgDiv.textContent = msg.text;
+                chatArea.appendChild(msgDiv);
+            });
+            chatArea.scrollTop = chatArea.scrollHeight;
+        };
+
+        window.sendMessage = async function() {
+            const input = document.getElementById('user-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const chat = chats.find(c => c.id === currentChatId);
+            if (chat.messages.length === 0) {
+                chat.title = text.length > 20 ? text.substring(0, 20) + '...' : text;
+                renderChatList();
+            }
+
+            chat.messages.push({ sender: 'user', text: text });
+            input.value = '';
+            renderActiveChat();
+
+            // Simulate AI response / Backend call placeholder
+            setTimeout(() => {
+                chat.messages.push({ sender: 'ai', text: "Bu bir yapay zeka yanıtıdır." });
+                renderActiveChat();
+            }, 600);
+        };
+
         window.openSettingsModal = function() {
             const select = document.getElementById('settings-lang-select');
             if (select) select.value = currentLang;
-            const modal = document.getElementById('settings-modal');
-            if (modal) modal.style.display = 'flex';
+            document.getElementById('settings-modal').style.display = 'flex';
         };
 
         window.closeSettingsModal = function() {
-            const modal = document.getElementById('settings-modal');
-            if (modal) modal.style.display = 'none';
+            document.getElementById('settings-modal').style.display = 'none';
         };
 
         window.updateLanguageFromSettings = function() {
             const select = document.getElementById('settings-lang-select');
-            if (select) {
-                applyLanguage(select.value);
-            }
+            if (select) applyLanguage(select.value);
             closeSettingsModal();
         };
 
         window.togglePlusMenu = function(e) {
             if (e) e.stopPropagation();
-            const menu = document.getElementById('plus-menu');
-            if (menu) menu.classList.toggle('show');
+            document.getElementById('plus-menu').classList.toggle('show');
         };
 
         document.addEventListener('click', () => {
@@ -418,17 +511,16 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             applyLanguage(currentLang);
+            renderChatList();
+            renderActiveChat();
 
-            const googleBtn = document.getElementById('btn-google') || document.getElementById('btn-google-text')?.parentElement;
+            const googleBtn = document.getElementById('btn-google');
             if (googleBtn) {
                 googleBtn.addEventListener('click', async () => {
                     try {
                         const result = await signInWithPopup(auth, googleProvider);
-                        const user = result.user;
-                        console.log("Google Girişi Başarılı:", user);
-                        
-                        const authModal = document.getElementById('auth-modal');
-                        if (authModal) authModal.style.display = 'none';
+                        alert(`Hoş geldin, ${result.user.displayName || 'Kullanıcı'}!`);
+                        document.getElementById('auth-modal').style.display = 'none';
                     } catch (error) {
                         console.error("Google Auth Hatası:", error);
                     }
