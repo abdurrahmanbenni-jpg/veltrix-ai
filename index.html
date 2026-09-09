@@ -24,7 +24,6 @@
             overflow: hidden;
         }
 
-        /* Layout */
         #app-container {
             display: flex;
             width: 100%;
@@ -47,7 +46,6 @@
             position: relative;
         }
 
-        /* Top Bar & Header */
         .top-bar {
             padding: 15px 20px;
             border-bottom: 1px solid var(--border-color);
@@ -79,7 +77,6 @@
             background-color: #2563eb;
         }
 
-        /* Chat Area */
         #chat-area {
             flex: 1;
             padding: 20px;
@@ -99,7 +96,6 @@
             color: #aaa;
         }
 
-        /* Input Area */
         #input-container {
             padding: 20px;
             border-top: 1px solid var(--border-color);
@@ -121,7 +117,6 @@
             outline: none;
         }
 
-        /* Plus Menu Popup */
         .plus-menu {
             display: none;
             position: absolute;
@@ -148,7 +143,6 @@
             background-color: #2a2a2a;
         }
 
-        /* Modals */
         .modal {
             display: none;
             position: fixed;
@@ -185,16 +179,12 @@
 <body>
 
     <div id="app-container">
-        <!-- Sidebar -->
         <div id="sidebar">
             <button id="btn-new-chat" class="btn btn-primary" style="margin-bottom: 20px;">Yeni Sohbet</button>
-            <div style="flex: 1;">
-                <!-- Chat Listesi Alanı -->
-            </div>
+            <div style="flex: 1;"></div>
             <button onclick="openSettingsModal()" class="btn">⚙️ Ayarlar</button>
         </div>
 
-        <!-- Ana İçerik -->
         <div id="main-content">
             <div class="top-bar">
                 <span id="current-lang-name">Türkçe</span>
@@ -207,7 +197,6 @@
             </div>
 
             <div id="input-container">
-                <!-- Artı Menüsü -->
                 <button class="btn" onclick="togglePlusMenu(event)">+</button>
                 <div id="plus-menu" class="plus-menu">
                     <div id="menu-gallery" class="plus-menu-item">Galeri</div>
@@ -220,7 +209,6 @@
         </div>
     </div>
 
-    <!-- Auth Modal -->
     <div id="auth-modal" class="modal">
         <div class="modal-content">
             <h3 id="modal-title">Giriş Yap / Kayıt Ol</h3>
@@ -246,7 +234,6 @@
         </div>
     </div>
 
-    <!-- Kamera Modal -->
     <div id="camera-modal" class="modal">
         <div class="modal-content">
             <h3 id="cam-title">Kamera</h3>
@@ -256,7 +243,6 @@
         </div>
     </div>
 
-    <!-- Ayarlar Modal -->
     <div id="settings-modal" class="modal">
         <div class="modal-content">
             <h3 id="settings-title">Ayarlar</h3>
@@ -270,19 +256,18 @@
         </div>
     </div>
 
-    <!-- Logic Scripts -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // Firebase Yapılandırman (Kendi Firebase bilgilerini yaz)
         const firebaseConfig = {
             apiKey: "AIzaSyCpe5dskNAllAKDn0UjB_uHKBhQJfWRg1c",
-            authDomain: "http://veltrix-ai-63b94.firebaseapp.com/",
+            authDomain: "veltrix-ai-63b94.firebaseapp.com",
             projectId: "veltrix-ai-63b94",
-            storageBucket: "http://veltrix-ai-63b94.firebasestorage.app/",
+            storageBucket: "veltrix-ai-63b94.firebasestorage.app",
             messagingSenderId: "539377938284",
-            appId: "1:539377938284:web:efb25fd388b8a58c01cd49"
+            appId: "1:539377938284:web:efb25fd388b8a58c01cd49",
+            measurementId: "G-WQJN5W5LVX"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -358,7 +343,7 @@
 
         let currentLang = localStorage.getItem('app_lang') || 'tr';
 
-        function setTxt(id, val) {
+        function setSafeText(id, val) {
             const el = document.getElementById(id);
             if (el) {
                 if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
@@ -374,53 +359,32 @@
             currentLang = lang;
             localStorage.setItem('app_lang', lang);
 
-            setTxt('current-lang-name', t.langName);
-            setTxt('btn-new-chat', t.newChat);
-            setTxt('welcome-sub-text', t.welcomeSub);
-            setTxt('user-input', t.placeholder);
-            setTxt('btn-send', t.send);
-            setTxt('menu-gallery', t.gallery);
-            setTxt('menu-camera', t.camera);
-            setTxt('cam-title', t.camTitle);
-            setTxt('cam-snap-btn', t.snap);
-            setTxt('cam-close-btn', t.cancel);
-            setTxt('modal-title', t.authTitle);
-            setTxt('btn-google-text', t.googleBtn);
-            setTxt('btn-email-text', t.emailBtn);
-            setTxt('btn-phone-text', t.phoneBtn);
-            setTxt('auth-email', t.emailPlaceholder);
-            setTxt('auth-password', t.passPlaceholder);
-            setTxt('btn-submit-email', t.submitEmail);
-            setTxt('back-email-link', t.back);
-            setTxt('back-phone-link', t.back);
-            setTxt('phone-soon-text', t.phoneSoon);
-            setTxt('settings-title', t.settings);
-            setTxt('settings-lang-label', t.settingsLang);
-            setTxt('btn-settings-save', t.save);
-            setTxt('btn-settings-cancel', t.cancel);
+            setSafeText('current-lang-name', t.langName);
+            setSafeText('btn-new-chat', t.newChat);
+            setSafeText('welcome-sub-text', t.welcomeSub);
+            setSafeText('user-input', t.placeholder);
+            setSafeText('btn-send', t.send);
+            setSafeText('menu-gallery', t.gallery);
+            setSafeText('menu-camera', t.camera);
+            setSafeText('cam-title', t.camTitle);
+            setSafeText('cam-snap-btn', t.snap);
+            setSafeText('cam-close-btn', t.cancel);
+            setSafeText('modal-title', t.authTitle);
+            setSafeText('btn-google-text', t.googleBtn);
+            setSafeText('btn-email-text', t.emailBtn);
+            setSafeText('btn-phone-text', t.phoneBtn);
+            setSafeText('auth-email', t.emailPlaceholder);
+            setSafeText('auth-password', t.passPlaceholder);
+            setSafeText('btn-submit-email', t.submitEmail);
+            setSafeText('back-email-link', t.back);
+            setSafeText('back-phone-link', t.back);
+            setSafeText('phone-soon-text', t.phoneSoon);
+            setSafeText('settings-title', t.settings);
+            setSafeText('settings-lang-label', t.settingsLang);
+            setSafeText('btn-settings-save', t.save);
+            setSafeText('btn-settings-cancel', t.cancel);
         }
 
-        // Google ile Giriş Fonksiyonu
-        async function handleGoogleSignIn() {
-            try {
-                const result = await signInWithPopup(auth, googleProvider);
-                const user = result.user;
-                alert(`Hoş geldin, ${user.displayName || 'Kullanıcı'}!`);
-                
-                const authModal = document.getElementById('auth-modal');
-                if (authModal) authModal.style.display = 'none';
-
-            } catch (error) {
-                console.error("Google Giriş Hatası:", error);
-                if (error.code === 'auth/unauthorized-domain') {
-                    alert("Hata: Bu domain Firebase Console -> Authorized Domains listesinde ekli değil!");
-                } else if (error.code !== 'auth/popup-closed-by-user') {
-                    alert("Giriş yapılamadı: " + error.message);
-                }
-            }
-        }
-
-        // Pencere Fonksiyonları
         window.openSettingsModal = function() {
             const select = document.getElementById('settings-lang-select');
             if (select) select.value = currentLang;
@@ -435,7 +399,9 @@
 
         window.updateLanguageFromSettings = function() {
             const select = document.getElementById('settings-lang-select');
-            if (select) applyLanguage(select.value);
+            if (select) {
+                applyLanguage(select.value);
+            }
             closeSettingsModal();
         };
 
@@ -453,10 +419,20 @@
         window.addEventListener('DOMContentLoaded', () => {
             applyLanguage(currentLang);
 
-            // Google Giriş Butonunu Bağlama
-            const googleBtn = document.getElementById('btn-google');
+            const googleBtn = document.getElementById('btn-google') || document.getElementById('btn-google-text')?.parentElement;
             if (googleBtn) {
-                googleBtn.addEventListener('click', handleGoogleSignIn);
+                googleBtn.addEventListener('click', async () => {
+                    try {
+                        const result = await signInWithPopup(auth, googleProvider);
+                        const user = result.user;
+                        console.log("Google Girişi Başarılı:", user);
+                        
+                        const authModal = document.getElementById('auth-modal');
+                        if (authModal) authModal.style.display = 'none';
+                    } catch (error) {
+                        console.error("Google Auth Hatası:", error);
+                    }
+                });
             }
         });
     </script>
