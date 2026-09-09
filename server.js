@@ -77,12 +77,10 @@ app.post('/api/chat', async (req, res) => {
     }
 });
 
-// Yerel geliştirme ortamı kontrolü
-if (process.env.NODE_ENV !== 'production') {
-    app.listen(3000, () => {
-        console.log("Veltrix AI calisio okumak yerine git test et mal.");
-    });
-}
+// Render için dinamik port dinleyicisi
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Veltrix AI ${PORT} portunda calisiyor.`);
+});
 
-// Vercel için modül dışa aktarımı
 module.exports = app;
