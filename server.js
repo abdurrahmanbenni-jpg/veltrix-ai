@@ -1,86 +1,41 @@
 const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const { GoogleGenAI } = require('@google/genai');
-require('dotenv').config();
-
+const path = require('path');
 const app = express();
-app.use(cors());
-app.use(bodyParser.json({ limit: '15mb' }));
+const PORT = process.env.PORT || 3000;
 
-const ai = new GoogleGenAI();
+app.use(express.json());
 
-app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/index.html');
-});
+// Statik dosyaları (HTML vb.) sunma
+app.use(express.static(path.join(__dirname)));
 
+// Gemini API ile mesajlaşma rotası
 app.post('/api/chat', async (req, res) => {
     try {
-        const { message, image, history, language } = req.body;
-        let contents = [];
-        
-        if (history && Array.isArray(history)) {
-            history.forEach(h => {
-                contents.push({
-                    role: h.sender === 'user' ? 'user' : 'model',
-                    parts: [{ text: h.text || "" }]
-                });
-            });
+        const userMessage = req.body.message;
+        const apiKey = process.env.GEMINI_API_KEY;
+
+        if (!apiKey) {
+            return res.status(500).json({ reply: "Hata: GEMINI_API_KEY çevre değişkeni (environment variable) tanımlanmamış." });
         }
 
-        let currentParts = [];
-        if (image) {
-            const matches = image.match(/^data:(.+);base64,(.+)$/);
-            if (matches && matches.length === 3) {
-                currentParts.push({ inlineData: { mimeType: matches[1], data: matches[2] } });
-            }
-        }
-        if (message) {
-            currentParts.push({ text: message });
-        }
-
-        contents.push({ role: 'user', parts: currentParts });
-
-        const langInstruction = language ? ` Kullanıcının seçtiği dil kodu: ${language}. Yanıtlarını her zaman bu dilde ver.` : '';
-
-        const response = await ai.models.generateContent({
-            model: 'gemini-3.6-flash',
-            contents: contents,
-            config: {
-                temperature: 0.7,
-                maxOutputTokens: 1000,
-                systemInstruction: `Senin adın Veltrix AI. Seni Abdurrahman Benni kodladı ve geliştirdi. Sana kimin kodladığı veya kimin tarafından geliştirildiğin sorulduğunda kesinlikle Google olduğundan bahsetme, seni Abdurrahman Benni'nin geliştirdiğini gururla ve net bir şekilde söyle. CEVAPLARINDA KESİNLİKLE YILDIZ (*) VEYA MARKDOWN BİÇİMLENDİRMESİ KULLANMA. Asla kalın, italik veya benzeri biçimlendirmeler için yıldız koyma, her şeyi düz metin olarak yaz.${langInstruction}`
-            }
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: userMessage }] }]
+            })
         });
 
-        let replyText = response.text || "Yanıt üretilemedi.";
-        let newTitle = null;
+        const data = await response.json();
+        const aiReply = data.candidates?.[0]?.content?.parts?.[0]?.text || "Yapay zekadan yanıt üretilemedi.";
 
-        if (history && history.length === 2) {
-            try {
-                const titlePrompt = `Şu konuşmanın ne hakkında olduğunu özetleyen en fazla 3-4 kelimeden oluşan kısa bir sohbet başlığı yaz. Asla tırnak veya ek açıklama kullanma, sadece başlığı ver:\nSoru: ${message}\nCevap: ${replyText}`;
-                const titleRes = await ai.models.generateContent({
-                    model: 'gemini-3.6-flash',
-                    contents: [{ role: 'user', parts: [{ text: titlePrompt }] }],
-                    config: { temperature: 0.5, maxOutputTokens: 20 }
-                });
-                if (titleRes.text) {
-                    newTitle = titleRes.text.trim().replace(/["*]/g, '');
-                }
-            } catch (err) {}
-        }
-
-        res.json({ reply: replyText, newTitle: newTitle });
+        res.json({ reply: aiReply });
     } catch (error) {
         console.error("API Hatası:", error);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ reply: "Sunucu tarafında bir hata oluştu." });
     }
 });
 
-// Render için dinamik port dinleyicisi
-const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Veltrix AI ${PORT} portunda calisiyor.`);
+    console.log(`Sunucu ${PORT} portunda çalışıyor.`);
 });
-
-module.exports = app;
