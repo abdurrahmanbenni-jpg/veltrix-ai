@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Veltrix AI</title>
+    <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230f172a'/><rect x='5' y='5' width='90' height='90' rx='15' fill='%23000' stroke='%235eead4' stroke-width='4'/><circle cx='50' cy='50' r='18' fill='none' stroke='%235eead4' stroke-width='5' stroke-dasharray='5 5'/><circle cx='50' cy='50' r='5' fill='%235eead4'/><path d='M50 12v18 M50 70v18 M12 50h18 M70 50h18' stroke='%235eead4' stroke-width='6' stroke-linecap='round'/></svg>">
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { 
+            getAuth, 
+            GoogleAuthProvider, 
+            signInWithPopup, 
+            signOut, 
+            onAuthStateChanged, 
+            signInWithEmailAndPassword, 
+            createUserWithEmailAndPassword 
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCpe5dskNAllAKDn0UjB_uHKBhQJfWRg1c",
+            authDomain: "veltrix-ai-63b94.firebaseapp.com",
+            projectId: "veltrix-ai-63b94",
+            storageBucket: "veltrix-ai-63b94.firebasestorage.app",
+            messagingSenderId: "539377938284",
+            appId: "1:539377938284:web:efb25fd388b8a58c01cd49"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const googleProvider = new GoogleAuthProvider();
+        
+        googleProvider.setCustomParameters({
+            prompt: 'select_account'
+        });
+
+        window.firebaseAuth = auth;
+        window.googleProvider = googleProvider;
+        window.signInWithGooglePopup = () => signInWithPopup(auth, googleProvider);
+        window.signOutUser = () => signOut(auth);
+        window.onAuthStateChanged = (callback) => onAuthStateChanged(auth, callback);
+        window.signInWithEmail = (email, pass) => signInWithEmailAndPassword(auth, email, pass);
+        window.registerWithEmail = (email, pass) => createUserWithEmailAndPassword(auth, email, pass);
+    </script>
+
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --sidebar-bg: #1e293b;
+            --chat-bg: #0f172a;
+            --user-msg: #3b82f6;
+            --assistant-msg: #334155;
+            --text-color: #f8fafc;
+            --border-color: #334155;
+            --accent-color: #5eead4;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        aside {
+            width: 280px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: var(--accent-color);
+        }
+        .custom-icon {
+            width: 28px;
+            height: 28px;
+            background: #000;
+            border: 2px solid var(--accent-color);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230f172a'/><rect x='5' y='5' width='90' height='90' rx='15' fill='%23000' stroke='%235eead4' stroke-width='4'/><circle cx='50' cy='50' r='18' fill='none' stroke='%235eead4' stroke-width='5' stroke-dasharray='5 5'/><circle cx='50' cy='50' r='5' fill='%235eead4'/><path d='M50 12v18 M50 70v18 M12 50h18 M70 50h18' stroke='%235eead4' stroke-width='6' stroke-linecap='round'/></svg>");
+            background-size: cover;
+        }
+        .new-chat-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .new-chat-btn:hover { background: #2563eb; }
+        
+        .chat-list-section-title {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 10px 0 5px 5px;
+        }
+
+        .chat-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .chat-item {
+            padding: 8px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: #cbd5e1;
+            position: relative;
+        }
+        .chat-item:hover, .chat-item.active { background: #334155; color: white; }
+        .chat-item-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; margin-right: 5px; }
+        
+        .chat-actions {
+            display: none;
+            align-items: center;
+            gap: 4px;
+        }
+        .chat-item:hover .chat-actions, .chat-item.active .chat-actions {
+            display: flex;
+        }
+        .action-icon-btn {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            padding: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+        .action-icon-btn:hover { color: var(--accent-color); background: rgba(255,255,255,0.1); }
+        .action-icon-btn.delete:hover { color: #ef4444; }
+        .action-icon-btn.pinned { color: var(--accent-color); }
+
+        .sidebar-footer { border-top: 1px solid var(--border-color); padding-top: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .auth-status { font-size: 0.8rem; color: #94a3b8; }
+        .auth-btn { background: #10b981; color: white; border: none; padding: 8px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9rem; }
+        .auth-btn.signed-in { background: #ef4444; }
+
+        main { flex: 1; display: flex; flex-direction: column; height: 100vh; background-color: var(--chat-bg); position: relative; }
+        header { padding: 15px 20px; background-color: var(--sidebar-bg); border-bottom: 1px solid var(--border-color); font-weight: bold; font-size: 1.1rem; display: flex; align-items: center; justify-content: space-between; }
+        .header-left { display: flex; align-items: center; gap: 10px; }
+        .header-right { display: flex; align-items: center; gap: 8px; }
+        
+        .lang-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            cursor: pointer;
+            padding: 6px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        .lang-btn:hover { background: #334155; color: var(--accent-color); border-color: var(--accent-color); }
+        
+        #welcome-screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
+        .welcome-icon { width: 64px; height: 64px; margin-bottom: 20px; border-radius: 16px; box-shadow: 0 0 20px rgba(94, 234, 212, 0.2); }
+        .welcome-title { font-size: 2.2rem; font-weight: 700; margin: 0 0 10px 0; }
+        .welcome-subtitle { font-size: 1.1rem; color: #94a3b8; margin: 0; }
+
+        #chat-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; max-width: 800px; width: 100%; margin: 0 auto; box-sizing: border-box; }
+        .message-wrapper { display: flex; flex-direction: column; max-width: 85%; position: relative; }
+        .message-wrapper.user { align-self: flex-end; }
+        .message-wrapper.assistant { align-self: flex-start; }
+        
+        .message { padding: 12px 18px; border-radius: 12px; word-break: break-word; line-height: 1.5; font-size: 0.95rem; }
+        .user .message { background: var(--user-msg); }
+        .assistant .message { background: var(--assistant-msg); }
+        .message img { max-width: 100%; border-radius: 8px; margin-top: 5px; }
+
+        .copy-btn {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            margin-top: 4px;
+            width: fit-content;
+            transition: color 0.2s, background 0.2s;
+        }
+        .copy-btn:hover { color: var(--accent-color); background: rgba(255,255,255,0.05); }
+
+        .typing-indicator { 
+            display: none; 
+            align-self: flex-start; 
+            background: var(--assistant-msg); 
+            padding: 12px 16px; 
+            border-radius: 12px; 
+            align-items: center; 
+            gap: 5px;
+            width: fit-content;
+        }
+        .typing-dot {
+            width: 7px;
+            height: 7px;
+            background-color: var(--accent-color);
+            border-radius: 50%;
+            animation: typingBounce 1.4s infinite ease-in-out both;
+        }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes typingBounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+
+        #input-container { padding: 20px; background-color: var(--sidebar-bg); border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 10px; max-width: 800px; width: 100%; margin: 0 auto; box-sizing: border-box; }
+        .input-row { display: flex; gap: 10px; align-items: center; position: relative; }
+        
+        .plus-container { position: relative; display: inline-block; }
+        .file-icon-btn { background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); width: 42px; height: 42px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .file-icon-btn:hover { background: #334155; }
+        
+        .plus-menu {
+            position: absolute;
+            bottom: 52px;
+            left: 0;
+            background: var(--sidebar-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            display: none;
+            flex-direction: column;
+            width: 170px;
+            z-index: 100;
+            overflow: hidden;
+        }
+        .plus-menu.show { display: flex; }
+        .plus-menu-item {
+            padding: 12px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            color: var(--text-color);
+            background: transparent;
+            border: none;
+            width: 100%;
+            text-align: left;
+        }
+        .plus-menu-item:hover { background: #334155; }
+
+        input[type="text"], input[type="email"], input[type="password"], input[type="tel"], select { flex: 1; padding: 12px 15px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); font-size: 1rem; outline: none; box-sizing: border-box; width: 100%; }
+        select { cursor: pointer; }
+        button.send-btn { padding: 0 20px; height: 42px; border: none; background: var(--user-msg); color: white; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        button.send-btn:disabled { background: #475569; cursor: not-allowed; }
+
+        #image-preview-container { display: none; align-items: center; gap: 10px; padding: 5px 10px; background: var(--bg-color); border-radius: 6px; width: fit-content; border: 1px solid var(--border-color); }
+        #image-preview-container img { width: 35px; height: 35px; object-fit: cover; border-radius: 4px; }
+        .remove-img { color: #ef4444; cursor: pointer; font-weight: bold; font-size: 0.9rem; }
+
+        .camera-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 2000; }
+        .camera-modal-content { background: var(--sidebar-bg); border: 1px solid var(--border-color); padding: 20px; border-radius: 12px; display: flex; flex-direction: column; gap: 15px; align-items: center; max-width: 450px; width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .camera-preview-box { width: 100%; height: 320px; background: #000; border-radius: 8px; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; }
+        .camera-preview-box video { width: 100%; height: 100%; object-fit: cover; }
+        .camera-controls { display: flex; gap: 10px; width: 100%; }
+        .cam-btn { flex: 1; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; border: none; }
+        .snap-btn { background: #10b981; color: white; }
+        .snap-btn:hover { background: #059669; }
+        .close-cam-btn { background: #ef4444; color: white; }
+        .close-cam-btn:hover { background: #dc2626; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: var(--sidebar-bg); border: 1px solid var(--border-color); padding: 25px; border-radius: 12px; width: 350px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        
+        .auth-option-btn { background: var(--bg-color); color: var(--text-color); border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 10px; transition: background 0.2s; }
+        .auth-option-btn:hover { background: #334155; }
+        
+        .modal-close { background: #ef4444; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 5px; }
+        .form-group { display: flex; flex-direction: column; gap: 8px; }
+        .back-link { color: var(--accent-color); cursor: pointer; font-size: 0.85rem; text-align: center; margin-top: 5px; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <!-- Dil Seçim Modalı (İlk Açılış) -->
+    <div class="modal-overlay" id="lang-modal" style="display: none;">
+        <div class="modal-content">
+            <div style="font-weight:bold; color:var(--accent-color); text-align:center; font-size: 1.2rem;" id="modal-lang-title">Dil Seçimi / Language Selection</div>
+            <div class="form-group">
+                <label style="font-size: 0.9rem; color: #94a3b8;" id="lang-label">Lütfen uygulamanın dilini seçin:</label>
+                <select id="initial-lang-select">
+                    <option value="tr">Türkçe</option>
+                    <option value="en">English</option>
+                    <option value="es">Español</option>
+                    <option value="fr">Français</option>
+                    <option value="de">Deutsch</option>
+                    <option value="ar">العربية</option>
+                    <option value="ru">Русский</option>
+                    <option value="zh">中文</option>
+                    <option value="ja">日本語</option>
+                    <option value="it">Italiano</option>
+                </select>
+                <button class="auth-option-btn" style="background:var(--user-msg); color:white; border:none; margin-top: 10px;" id="btn-initial-save" onclick="saveLanguageAndProceed()">Kaydet</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ayarlar / Dil Değiştirme Modalı -->
+    <div class="modal-overlay" id="settings-modal">
+        <div class="modal-content">
+            <div style="font-weight:bold; color:var(--accent-color); text-align:center; font-size: 1.2rem;" id="settings-title">Ayarlar</div>
+            <div class="form-group">
+                <label style="font-size: 0.9rem; color: #94a3b8;" id="settings-lang-label">Uygulama Dili:</label>
+                <select id="settings-lang-select">
+                    <option value="tr">Türkçe</option>
+                    <option value="en">English</option>
+                    <option value="es">Español</option>
+                    <option value="fr">Français</option>
+                    <option value="de">Deutsch</option>
+                    <option value="ar">العربية</option>
+                    <option value="ru">Русский</option>
+                    <option value="zh">中文</option>
+                    <option value="ja">日本語</option>
+                    <option value="it">Italiano</option>
+                </select>
+                <button class="auth-option-btn" style="background:var(--user-msg); color:white; border:none; margin-top: 10px;" id="btn-settings-save" onclick="updateLanguageFromSettings()">Kaydet</button>
+                <button class="modal-close" id="btn-settings-cancel" onclick="closeSettingsModal()">İptal</button>
+            </div>
+        </div>
+    </div>
+
+    <aside>
+        <div class="brand"><div class="custom-icon"></div><span>Veltrix AI</span></div>
+        <button class="new-chat-btn" id="btn-new-chat" onclick="startNewChat()">+ Yeni Sohbet</button>
+        <div class="chat-list" id="chat-list"></div>
+        <div class="sidebar-footer">
+            <span class="auth-status" id="auth-status"></span>
+            <button class="auth-btn" id="auth-btn" onclick="handleAuthClick()"></button>
+        </div>
+    </aside>
+
+    <main>
+        <header>
+            <div class="header-left">
+                <div class="custom-icon"></div>
+                <span id="current-chat-title">Veltrix AI</span>
+            </div>
+            <div class="header-right">
+                <button class="lang-btn" onclick="openSettingsModal()" title="Dil / Language">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                    <span id="current-lang-name">Türkçe</span>
+                </button>
+            </div>
+        </header>
+
+        <div id="welcome-screen">
+            <div class="custom-icon welcome-icon"></div>
+            <h1 class="welcome-title">Veltrix AI</h1>
+            <p class="welcome-subtitle" id="welcome-sub-text">Hazır olduğunuzda başlayalım</p>
+        </div>
+
+        <div id="chat-container" class="hidden">
+            <div class="typing-indicator" id="typing-indicator">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+        </div>
+
+        <div id="input-container">
+            <div id="image-preview-container">
+                <img id="preview-thumb" src="" alt="Preview">
+                <span style="font-size: 0.85rem;" id="file-name-txt">Görsel eklendi</span>
+                <span class="remove-img" id="remove-img-btn" onclick="removeSelectedImage()">✕ Kaldır</span>
+            </div>
+            <div class="input-row">
+                <div class="plus-container">
+                    <button class="file-icon-btn" onclick="togglePlusMenu(event)" title="Medya Ekle">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    </button>
+                    <div class="plus-menu" id="plus-menu">
+                        <button class="plus-menu-item" onclick="triggerGallery()">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                            <span id="menu-gallery">Galeriden Seç</span>
+                        </button>
+                        <button class="plus-menu-item" onclick="triggerCamera()">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                            <span id="menu-camera">Fotoğraf Çek</span>
+                        </button>
+                    </div>
+                </div>
+
+                <input type="file" id="gallery-input" accept="image/*" style="display: none;" onchange="handleImageSelect(event)">
+
+                <input type="text" id="user-input" placeholder="Veltrix AI'ya bir şeyler yazın..." autofocus onkeydown="if(event.key==='Enter' && !event.shiftKey){ event.preventDefault(); sendMessage(); }">
+                <button class="send-btn" id="btn-send" onclick="sendMessage()">Gönder</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Kamera Çekim Modalı -->
+    <div class="camera-modal-overlay" id="camera-modal">
+        <div class="camera-modal-content">
+            <div style="font-weight:bold; color:var(--accent-color); font-size: 1.05rem;" id="cam-title">Kamera İzni ve Çekim</div>
+            <div class="camera-preview-box">
+                <video id="camera-video" autoplay playsinline></video>
+                <canvas id="camera-canvas" style="display: none;"></canvas>
+            </div>
+            <div class="camera-controls">
+                <button class="cam-btn snap-btn" id="cam-snap-btn" onclick="takeSnapshot()">Fotoğraf Çek</button>
+                <button class="cam-btn close-cam-btn" id="cam-close-btn" onclick="closeCameraModal()">İptal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Giriş Modalı -->
+    <div class="modal-overlay" id="auth-modal">
+        <div class="modal-content">
+            <div style="font-weight:bold; color:var(--accent-color); text-align:center; font-size: 1.1rem;" id="modal-title">Hesap İşlemleri</div>
+            
+            <div id="auth-main-options" style="display: flex; flex-direction: column; gap: 10px;">
+                <button class="auth-option-btn" onclick="loginWithGoogle()">
+                    <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.13 0-5.78-2.11-6.73-4.96H1.18v3.15C3.15 21.32 7.23 24 12 24z"/><path fill="#FBBC05" d="M5.27 14.24c-.25-.72-.38-1.49-.38-2.24s.13-1.52.38-2.24V6.61H1.18C.43 8.12 0 9.81 0 12s.43 3.88 1.18 5.39l4.09-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.23 0 3.15 2.68 1.18 6.61l4.09 3.15c.95-2.85 3.6-4.96 6.73-4.96z"/></svg>
+                    <span id="btn-google-text">Google ile Devam Et</span>
+                </button>
+                <button class="auth-option-btn" onclick="showEmailForm()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                    <span id="btn-email-text">E-posta ile Devam Et</span>
+                </button>
+                <button class="auth-option-btn" onclick="showPhoneForm()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                    <span id="btn-phone-text">Telefon Numarası ile Devam Et</span>
+                </button>
+                <button class="modal-close" id="btn-cancel-auth" onclick="closeModal()">İptal</button>
+            </div>
+
+            <div id="email-auth-form" class="form-group hidden">
+                <input type="email" id="auth-email" placeholder="E-posta adresiniz">
+                <input type="password" id="auth-password" placeholder="Şifreniz">
+                <button class="auth-option-btn" style="background:#3b82f6; color:white; border:none;" id="btn-submit-email" onclick="submitEmailAuth()">Giriş Yap / Kaydol</button>
+                <div class="back-link" id="back-email-link" onclick="resetModalView()">← Geri Dön</div>
+            </div>
+
+            <div id="phone-auth-form" class="form-group hidden">
+                <input type="tel" id="auth-phone" placeholder="+90 555 555 55 55">
+                <div style="font-size: 0.8rem; color: #94a3b8; text-align: center;" id="phone-soon-text">Telefon doğrulaması yakında aktif edilecektir.</div>
+                <div class="back-link" id="back-phone-link" onclick="resetModalView()">← Geri Dön</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const translations = {
+            tr: {
+                langName: "Türkçe",
+                newChat: "+ Yeni Sohbet",
+                pinned: "Sabitlenenler",
+                chats: "Sohbetler",
+                signedIn: "Giriş Yapıldı (Sınırsız)",
+                signIn: "Giriş Yap",
+                signOut: "Çıkış Yap",
+                welcomeSub: "Hazır olduğunuzda başlayalım",
+                placeholder: "Veltrix AI'ya bir şeyler yazın...",
+                send: "Gönder",
+                gallery: "Galeriden Seç",
+                camera: "Fotoğraf Çek",
+                imgAdded: "Görsel eklendi",
+                remove: "✕ Kaldır",
+                camTitle: "Kamera İzni ve Çekim",
+                snap: "Fotoğraf Çek",
+                cancel: "İptal",
+                authTitle: "Hesap İşlemleri",
+                googleBtn: "Google ile Devam Et",
+                emailBtn: "E-posta ile Devam Et",
+                phoneBtn: "Telefon Numarası ile Devam Et",
+                emailPlaceholder: "E-posta adresiniz",
+                passPlaceholder: "Şifreniz",
+                submitEmail: "Giriş Yap / Kaydol",
+                back: "← Geri Dön",
+                phoneSoon: "Telefon doğrulaması yakında aktif edilecektir.",
+                settings: "Ayarlar",
+                settingsLang: "Uygulama Dili:",
+                save: "Kaydet",
+                langModalTitle: "Dil Seçimi / Language Selection",
+                langLabel: "Lütfen uygulamanın dilini seçin:",
+                newChatDefault: "Yeni Sohbet",
+                msgLimit: "Mesaj hakkınız doldu! Sınırsız kullanım için giriş yapın.",
+                connErr: "Sunucu bağlantı hatası oluştu.",
+                atLeastOneChat: "En az bir sohbet kalmalıdır.",
+                deleteChatTitle: "Sohbeti Sil",
+                pinChatTitle: "Sabitle",
+                unpinChatTitle: "Sabiti Kaldır"
+            },
+            en: {
+                langName: "English",
+                newChat: "+ New Chat",
+                pinned: "Pinned",
+                chats: "Chats",
+                signedIn: "Signed In (Unlimited)",
+                signIn: "Sign In",
+                signOut: "Sign Out",
+                welcomeSub: "Let's begin when you are ready",
+                placeholder: "Type something to Veltrix AI...",
+                send: "Send",
+                gallery: "Select from Gallery",
+                camera: "Take Photo",
+                imgAdded: "Image added",
+                remove: "✕ Remove",
+                camTitle: "Camera Permission & Capture",
+                snap: "Take Photo",
+                cancel: "Cancel",
+                authTitle: "Account Operations",
+                googleBtn: "Continue with Google",
+                emailBtn: "Continue with Email",
+                phoneBtn: "Continue with Phone Number",
+                emailPlaceholder: "Your email address",
+                passPlaceholder: "Your password",
+                submitEmail: "Sign In / Register",
+                back: "← Back",
+                phoneSoon: "Phone verification will be available soon.",
+                settings: "Settings",
+                settingsLang: "App Language:",
+                save: "Save",
+                langModalTitle: "Language Selection",
+                langLabel: "Please select the application language:",
+                newChatDefault: "New Chat",
+                msgLimit: "Your message limit has been reached! Sign in for unlimited usage.",
+                connErr: "Server connection error occurred.",
+                atLeastOneChat: "At least one chat must remain.",
+                deleteChatTitle: "Delete Chat",
+                pinChatTitle: "Pin",
+                unpinChatTitle: "Unpin"
+            },
+            es: {
+                langName: "Español",
+                newChat: "+ Nuevo Chat",
+                pinned: "Fijados",
+                chats: "Chats",
+                signedIn: "Conectado (Ilimitado)",
+                signIn: "Iniciar Sesión",
+                signOut: "Cerrar Sesión",
+                welcomeSub: "Comencemos cuando estés listo",
+                placeholder: "Escribe algo a Veltrix AI...",
+                send: "Enviar",
+                gallery: "Seleccionar de la Galería",
+                camera: "Tomar Foto",
+                imgAdded: "Imagen añadida",
+                remove: "✕ Eliminar",
+                camTitle: "Permiso de Cámara y Captura",
+                snap: "Tomar Foto",
+                cancel: "Cancelar",
+                authTitle: "Operaciones de Cuenta",
+                googleBtn: "Continuar con Google",
+                emailBtn: "Continuar con Correo",
+                phoneBtn: "Continuar con Teléfono",
+                emailPlaceholder: "Tu dirección de correo",
+                passPlaceholder: "Tu contraseña",
+                submitEmail: "Iniciar Sesión / Registrarse",
+                back: "← Volver",
+                phoneSoon: "La verificación por teléfono estará disponible pronto.",
+                settings: "Configuración",
+                settingsLang: "Idioma de la aplicación:",
+                save: "Guardar",
+                langModalTitle: "Selección de Idioma",
+                langLabel: "Por favor seleccione el idioma de la aplicación:",
+                newChatDefault: "Nuevo Chat",
+                msgLimit: "¡Has alcanzado tu límite de mensajes! Inicia sesión para uso ilimitado.",
+                connErr: "Ocurrió un error de conexión con el servidor.",
+                atLeastOneChat: "Debe quedar al menos un chat.",
+                deleteChatTitle: "Eliminar Chat",
+                pinChatTitle: "Fijar",
+                unpinChatTitle: "Desfijar"
+            },
+            fr: {
+                langName: "Français",
+                newChat: "+ Nouvelle discussion",
+                pinned: "Épinglé",
+                chats: "Discussions",
+                signedIn: "Connecté (Illimité)",
+                signIn: "Se connecter",
+                signOut: "Se déconnecter",
+                welcomeSub: "Commençons quand vous êtes prêt",
+                placeholder: "Écrivez quelque chose à Veltrix AI...",
+                send: "Envoyer",
+                gallery: "Sélectionner depuis la galerie",
+                camera: "Prendre une photo",
+                imgAdded: "Image ajoutée",
+                remove: "✕ Supprimer",
+                camTitle: "Autorisation caméra et capture",
+                snap: "Prendre une photo",
+                cancel: "Annuler",
+                authTitle: "Opérations de compte",
+                googleBtn: "Continuer avec Google",
+                emailBtn: "Continuer avec E-mail",
+                phoneBtn: "Continuer avec Numéro de téléphone",
+                emailPlaceholder: "Votre adresse e-mail",
+                passPlaceholder: "Votre mot de passe",
+                submitEmail: "Se connecter / S'inscrire",
+                back: "← Retour",
+                phoneSoon: "La vérification par téléphone sera bientôt disponible.",
+                settings: "Paramètres",
+                settingsLang: "Langue de l'application :",
+                save: "Enregistrer",
+                langModalTitle: "Sélection de la langue",
+                langLabel: "Veuillez sélectionner la langue de l'application :",
+                newChatDefault: "Nouvelle discussion",
+                msgLimit: "Limite de messages atteinte ! Connectez-vous pour un usage illimité.",
+                connErr: "Erreur de connexion au serveur.",
+                atLeastOneChat: "Au moins une discussion doit rester.",
+                deleteChatTitle: "Supprimer la discussion",
+                pinChatTitle: "Épingler",
+                unpinChatTitle: "Détacher"
+            },
+            de: {
+                langName: "Deutsch",
+                newChat: "+ Neuer Chat",
+                pinned: "Angeheftet",
+                chats: "Chats",
+                signedIn: "Angemeldet (Unbegrenzt)",
+                signIn: "Anmelden",
+                signOut: "Abmelden",
+                welcomeSub: "Lassen Sie uns beginnen, wenn Sie bereit sind",
+                placeholder: "Schreiben Sie etwas an Veltrix AI...",
+                send: "Senden",
+                gallery: "Aus Galerie wählen",
+                camera: "Foto aufnehmen",
+                imgAdded: "Bild hinzugefügt",
+                remove: "✕ Entfernen",
+                camTitle: "Kameraberechtigung & Aufnahme",
+                snap: "Foto aufnehmen",
+                cancel: "Abbrechen",
+                authTitle: "Kontovorgänge",
+                googleBtn: "Mit Google fortfahren",
+                emailBtn: "Mit E-Mail fortfahren",
+                phoneBtn: "Mit Telefonnummer fortfahren",
+                emailPlaceholder: "Ihre E-Mail-Adresse",
+                passPlaceholder: "Ihr Passwort",
+                submitEmail: "Anmelden / Registrieren",
+                back: "← Zurück",
+                phoneSoon: "Telefonverifizierung wird in Kürze verfügbar sein.",
+                settings: "Einstellungen",
+                settingsLang: "App-Sprache:",
+                save: "Speichern",
+                langModalTitle: "Sprachauswahl",
+                langLabel: "Bitte wählen Sie die Anwendungssprache:",
+                newChatDefault: "Neuer Chat",
+                msgLimit: "Nachrichtenlimit erreicht! Melden Sie sich für unbegrenzte Nutzung an.",
+                connErr: "Serververbindungsfehler aufgetreten.",
+                atLeastOneChat: "Mindestens ein Chat muss erhalten bleiben.",
+                deleteChatTitle: "Chat löschen",
+                pinChatTitle: "Anheften",
+                unpinChatTitle: "Loslösen"
+            },
+            ar: {
+                langName: "العربية",
+                newChat: "+ محادثة جديدة",
+                pinned: "المثبتة",
+                chats: "المحادثات",
+                signedIn: "تم تسجيل الدخول (غير محدود)",
+                signIn: "تسجيل الدخول",
+                signOut: "تسجيل الخروج",
+                welcomeSub: "لنبدأ عندما تكون مستعداً",
+                placeholder: "اكتب شيئاً إلى Veltrix AI...",
+                send: "إرسال",
+                gallery: "اختر من المعرض",
+                camera: "التقاط صورة",
+                imgAdded: "تم إضافة الصورة",
+                remove: "✕ إزالة",
+                camTitle: "إذن الكاميرا والتقاط",
+                snap: "التقاط صورة",
+                cancel: "إلغاء",
+                authTitle: "عمليات الحساب",
+                googleBtn: "المتابعة باستخدام Google",
+                emailBtn: "المتابعة باستخدام البريد الإلكتروني",
+                phoneBtn: "المتابعة باستخدام رقم الهاتف",
+                emailPlaceholder: "عنوان بريدك الإلكتروني",
+                passPlaceholder: "كلمة المرور الخاصة بك",
+                submitEmail: "تسجيل الدخول / التسجيل",
+                back: "← رجوع",
+                phoneSoon: "التحقق من الهاتف سيكون متاحاً قريباً.",
+                settings: "الإعدادات",
+                settingsLang: "لغة التطبيق:",
+                save: "حفظ",
+                langModalTitle: "اختيار اللغة",
+                langLabel: "الرجاء اختيار لغة التطبيق:",
+                newChatDefault: "محادثة جديدة",
+                msgLimit: "لقد وصلت إلى حد الرسائل الخاص بك! سجل الدخول للاستخدام غير المحدود.",
+                connErr: "حدث خطأ في الاتصال بالخادم.",
+                atLeastOneChat: "يجب أن تبقى محادثة واحدة على الأقل.",
+                deleteChatTitle: "حذف المحادثة",
+                pinChatTitle: "تثبيت",
+                unpinChatTitle: "إزالة التثبيت"
+            },
+            ru: {
+                langName: "Русский",
+                newChat: "+ Новый чат",
+                pinned: "Закрепленные",
+                chats: "Чаты",
+                signedIn: "Вход выполнен (Без ограничений)",
+                signIn: "Войти",
+                signOut: "Выйти",
+                welcomeSub: "Давайте начнем, когда вы будете готовы",
+                placeholder: "Напишите что-нибудь Veltrix AI...",
+                send: "Отправить",
+                gallery: "Выбрать из галереи",
+                camera: "Сделать фото",
+                imgAdded: "Изображение добавлено",
+                remove: "✕ Удалить",
+                camTitle: "Разрешение камеры и съемка",
+                snap: "Сделать фото",
+                cancel: "Отмена",
+                authTitle: "Операции с учетной записью",
+                googleBtn: "Продолжить с Google",
+                emailBtn: "Продолжить с Email",
+                phoneBtn: "Продолжить по номеру телефона",
+                emailPlaceholder: "Ваш адрес электронной почты",
+                passPlaceholder: "Ваш пароль",
+                submitEmail: "Войти / Зарегистрироваться",
+                back: "← Назад",
+                phoneSoon: "Подтверждение по телефону скоро будет доступно.",
+                settings: "Настройки",
+                settingsLang: "Язык приложения:",
+                save: "Сохранить",
+                langModalTitle: "Выбор языка",
+                langLabel: "Пожалуйста, выберите язык приложения:",
+                newChatDefault: "Новый чат",
+                msgLimit: "Лимит сообщений исчерпан! Войдите для неограниченного использования.",
+                connErr: "Произошла ошибка подключения к серверу.",
+                atLeastOneChat: "Должен остаться хотя бы один чат.",
+                deleteChatTitle: "Удалить чат",
+                pinChatTitle: "Закрепить",
+                unpinChatTitle: "Открепить"
+            },
+            zh: {
+                langName: "中文",
+                newChat: "+ 新建聊天",
+                pinned: "已置顶",
+                chats: "聊天",
+                signedIn: "已登录 (无限使用)",
+                signIn: "登录",
+                signOut: "登出",
+                welcomeSub: "准备好后即可开始",
+                placeholder: "向 Veltrix AI 输入内容...",
+                send: "发送",
+                gallery: "从相册选择",
+                camera: "拍照",
+                imgAdded: "已添加图片",
+                remove: "✕ 移除",
+                camTitle: "相机权限与拍摄",
+                snap: "拍照",
+                cancel: "取消",
+                authTitle: "账户操作",
+                googleBtn: "使用 Google 继续",
+                emailBtn: "使用电子邮箱继续",
+                phoneBtn: "使用手机号继续",
+                emailPlaceholder: "您的电子邮箱",
+                passPlaceholder: "您的密码",
+                submitEmail: "登录 / 注册",
+                back: "← 返回",
+                phoneSoon: "手机验证功能即将上线。",
+                settings: "设置",
+                settingsLang: "应用语言：",
+                save: "保存",
+                langModalTitle: "语言选择",
+                langLabel: "请选择应用程序语言：",
+                newChatDefault: "新聊天",
+                msgLimit: "已达到消息限制！登录以无限制使用。",
+                connErr: "服务器连接错误。",
+                atLeastOneChat: "必须保留至少一个聊天。",
+                deleteChatTitle: "删除聊天",
+                pinChatTitle: "置顶",
+                unpinChatTitle: "取消置顶"
+            },
+            ja: {
+                langName: "日本語",
+                newChat: "+ 新しいチャット",
+                pinned: "固定済み",
+                chats: "チャット",
+                signedIn: "サインイン済み (無制限)",
+                signIn: "サインイン",
+                signOut: "サインアウト",
+                welcomeSub: "準備ができたら始めましょう",
+                placeholder: "Veltrix AI にメッセージを入力...",
+                send: "送信",
+                gallery: "ギャラリーから選択",
+                camera: "写真を撮る",
+                imgAdded: "画像が追加されました",
+                remove: "✕ 削除",
+                camTitle: "カメラの権限と撮影",
+                snap: "写真を撮る",
+                cancel: "キャンセル",
+                authTitle: "アカウント操作",
+                googleBtn: "Google で続行",
+                emailBtn: "メールアドレスで続行",
+                phoneBtn: "電話番号で続行",
+                emailPlaceholder: "メールアドレス",
+                passPlaceholder: "パスワード",
+                submitEmail: "サインイン / 登録",
+                back: "← 戻る",
+                phoneSoon: "電話番号認証はまもなく利用可能になります。",
+                settings: "設定",
+                settingsLang: "アプリの言語：",
+                save: "保存",
+                langModalTitle: "言語選択",
+                langLabel: "アプリの言語を選択してください：",
+                newChatDefault: "新しいチャット",
+                msgLimit: "メッセージの上限に達しました！無制限で使用するにはサインインしてください。",
+                connErr: "サーバー接続エラーが発生しました。",
+                atLeastOneChat: "少なくとも1つのチャットを残す必要があります。",
+                deleteChatTitle: "チャットを削除",
+                pinChatTitle: "固定",
+                unpinChatTitle: "固定解除"
+            },
+            it: {
+                langName: "Italiano",
+                newChat: "+ Nuova chat",
+                pinned: "Fissati",
+                chats: "Chat",
+                signedIn: "Accesso effettuato (Illimitato)",
+                signIn: "Accedi",
+                signOut: "Esci",
+                welcomeSub: "Iniziamo quando sei pronto",
+                placeholder: "Scrivi qualcosa a Veltrix AI...",
+                send: "Invia",
+                gallery: "Seleziona dalla galleria",
+                camera: "Scatta foto",
+                imgAdded: "Immagine aggiunta",
+                remove: "✕ Rimuovi",
+                camTitle: "Autorizzazione fotocamera e scatto",
+                snap: "Scatta foto",
+                cancel: "Annulla",
+                authTitle: "Operazioni account",
+                googleBtn: "Continua con Google",
+                emailBtn: "Continua con Email",
+                phoneBtn: "Continua con numero di telefono",
+                emailPlaceholder: "Il tuo indirizzo email",
+                passPlaceholder: "La tua password",
+                submitEmail: "Accedi / Registrati",
+                back: "← Indietro",
+                phoneSoon: "La verifica telefonica sarà presto disponibile.",
+                settings: "Impostazioni",
+                settingsLang: "Lingua app:",
+                save: "Salva",
+                langModalTitle: "Selezione Lingua",
+                langLabel: "Seleziona la lingua dell'applicazione:",
+                newChatDefault: "Nuova chat",
+                msgLimit: "Limite di messaggi raggiunto! Accedi per l'uso illimitato.",
+                connErr: "Errore di connessione al server.",
+                atLeastOneChat: "Deve rimanere almeno una chat.",
+                deleteChatTitle: "Elimina chat",
+                pinChatTitle: "Fissa",
+                unpinChatTitle: "Rimuovi fissaggio"
+            }
+        };
+
+        let currentLang = localStorage.getItem('veltrix_lang') || 'tr';
+        let chats = JSON.parse(localStorage.getItem('veltrix_chats')) || [];
+        let currentChatId = null;
+        let selectedImageBase64 = null;
+        let mediaStream = null;
+
+        function t(key) {
+            return translations[currentLang]?.[key] || translations['tr'][key] || key;
+        }
+
+        const allNewChatDefaults = Object.values(translations).map(obj => obj.newChatDefault);
+
+        function applyTranslations() {
+            chats.forEach(chat => {
+                if (allNewChatDefaults.includes(chat.title)) {
+                    chat.title = t('newChatDefault');
+                }
+            });
+            saveChats();
+
+            document.getElementById('current-lang-name').innerText = t('langName');
+            document.getElementById('btn-new-chat').innerText = t('newChat');
+            document.getElementById('welcome-sub-text').innerText = t('welcomeSub');
+            document.getElementById('user-input').placeholder = t('placeholder');
+            document.getElementById('btn-send').innerText = t('send');
+            document.getElementById('menu-gallery').innerText = t('gallery');
+            document.getElementById('menu-camera').innerText = t('camera');
+            document.getElementById('file-name-txt').innerText = t('imgAdded');
+            document.getElementById('remove-img-btn').innerText = t('remove');
+            document.getElementById('cam-title').innerText = t('camTitle');
+            document.getElementById('cam-snap-btn').innerText = t('snap');
+            document.getElementById('cam-close-btn').innerText = t('cancel');
+            document.getElementById('modal-title').innerText = t('authTitle');
+            document.getElementById('btn-google-text').innerText = t('googleBtn');
+            document.getElementById('btn-email-text').innerText = t('emailBtn');
+            document.getElementById('btn-phone-text').innerText = t('phoneBtn');
+            document.getElementById('btn-cancel-auth').innerText = t('cancel');
+            document.getElementById('btn-submit-email').innerText = t('submitEmail');
+            document.getElementById('back-email-link').innerText = t('back');
+            document.getElementById('back-phone-link').innerText = t('back');
+            document.getElementById('phone-soon-text').innerText = t('phoneSoon');
+            document.getElementById('settings-title').innerText = t('settings');
+            document.getElementById('settings-lang-label').innerText = t('settingsLang');
+            document.getElementById('btn-settings-save').innerText = t('save');
+            document.getElementById('btn-settings-cancel').innerText = t('cancel');
+            document.getElementById('modal-lang-title').innerText = t('langModalTitle');
+            document.getElementById('lang-label').innerText = t('langLabel');
+            document.getElementById('btn-initial-save').innerText = t('save');
+
+            const authBtn = document.getElementById('auth-btn');
+            if (window.firebaseAuth?.currentUser) {
+                authBtn.innerText = t('signOut');
+                authBtn.classList.add('signed-in');
+                document.getElementById('auth-status').innerText = t('signedIn');
+            } else {
+                authBtn.innerText = t('signIn');
+                authBtn.classList.remove('signed-in');
+                document.getElementById('auth-status').innerText = "";
+            }
+            renderChatList();
+        }
+
+        function updateLanguageFromSettings() {
+            const lang = document.getElementById('settings-lang-select').value;
+            currentLang = lang;
+            localStorage.setItem('veltrix_lang', lang);
+            closeSettingsModal();
+            applyTranslations();
+        }
+
+        function saveLanguageAndProceed() {
+            const lang = document.getElementById('initial-lang-select').value;
+            currentLang = lang;
+            localStorage.setItem('veltrix_lang', lang);
+            document.getElementById('lang-modal').style.display = 'none';
+            applyTranslations();
+        }
+
+        function openSettingsModal() {
+            document.getElementById('settings-lang-select').value = currentLang;
+            document.getElementById('settings-modal').style.display = 'flex';
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settings-modal').style.display = 'none';
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (!localStorage.getItem('veltrix_lang')) {
+                document.getElementById('lang-modal').style.display = 'flex';
+            }
+            applyTranslations();
+            if (chats.length === 0) {
+                startNewChat();
+            } else {
+                switchChat(chats[0].id);
+            }
+        });
+
+        function startNewChat() {
+            const newChat = {
+                id: 'chat_' + Date.now(),
+                title: t('newChatDefault'),
+                messages: [],
+                pinned: false
+            };
+            chats.unshift(newChat);
+            saveChats();
+            switchChat(newChat.id);
+        }
+
+        function switchChat(chatId) {
+            currentChatId = chatId;
+            renderChatList();
+            renderMessages();
+        }
+
+        function saveChats() {
+            localStorage.setItem('veltrix_chats', JSON.stringify(chats));
+        }
+
+        function renderChatList() {
+            const listEl = document.getElementById('chat-list');
+            listEl.innerHTML = '';
+
+            const pinnedChats = chats.filter(c => c.pinned);
+            const otherChats = chats.filter(c => !c.pinned);
+
+            if (pinnedChats.length > 0) {
+                const section = document.createElement('div');
+                section.className = 'chat-list-section-title';
+                section.innerText = t('pinned');
+                listEl.appendChild(section);
+                pinnedChats.forEach(chat => listEl.appendChild(createChatElement(chat)));
+            }
+
+            if (otherChats.length > 0) {
+                if (pinnedChats.length > 0) {
+                    const section = document.createElement('div');
+                    section.className = 'chat-list-section-title';
+                    section.innerText = t('chats');
+                    listEl.appendChild(section);
+                }
+                otherChats.forEach(chat => listEl.appendChild(createChatElement(chat)));
+            }
+        }
+
+        function createChatElement(chat) {
+            const div = document.createElement('div');
+            div.className = `chat-item ${chat.id === currentChatId ? 'active' : ''}`;
+            
+            const titleSpan = document.createElement('span');
+            titleSpan.className = 'chat-item-title';
+            titleSpan.innerText = chat.title;
+            titleSpan.onclick = () => switchChat(chat.id);
+            div.appendChild(titleSpan);
+
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'chat-actions';
+
+            const pinBtn = document.createElement('button');
+            pinBtn.className = `action-icon-btn ${chat.pinned ? 'pinned' : ''}`;
+            pinBtn.title = chat.pinned ? t('unpinChatTitle') : t('pinChatTitle');
+            pinBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="17" x2="12" y2="22"></line><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-.89 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"></path></svg>`;
+            pinBtn.onclick = (e) => { e.stopPropagation(); togglePinChat(chat.id); };
+            actionsDiv.appendChild(pinBtn);
+
+            const delBtn = document.createElement('button');
+            delBtn.className = 'action-icon-btn delete';
+            delBtn.title = t('deleteChatTitle');
+            delBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
+            delBtn.onclick = (e) => { e.stopPropagation(); deleteChat(chat.id); };
+            actionsDiv.appendChild(delBtn);
+
+            div.appendChild(actionsDiv);
+            return div;
+        }
+
+        function togglePinChat(chatId) {
+            const chat = chats.find(c => c.id === chatId);
+            if (chat) {
+                chat.pinned = !chat.pinned;
+                saveChats();
+                renderChatList();
+            }
+        }
+
+        function deleteChat(chatId) {
+            if (chats.length <= 1) {
+                alert(t('atLeastOneChat'));
+                return;
+            }
+            chats = chats.filter(c => c.id !== chatId);
+            saveChats();
+            if (currentChatId === chatId) {
+                switchChat(chats[0].id);
+            } else {
+                renderChatList();
+            }
+        }
+
+        function renderMessages() {
+            const chatContainer = document.getElementById('chat-container');
+            const welcomeScreen = document.getElementById('welcome-screen');
+            const chat = chats.find(c => c.id === currentChatId);
+
+            if (!chat || chat.messages.length === 0) {
+                welcomeScreen.classList.remove('hidden');
+                chatContainer.classList.add('hidden');
+                return;
+            }
+
+            welcomeScreen.classList.add('hidden');
+            chatContainer.classList.remove('hidden');
+
+            const typingIndicator = document.getElementById('typing-indicator');
+            chatContainer.innerHTML = '';
+            chat.messages.forEach(msg => {
+                const wrapper = document.createElement('div');
+                wrapper.className = `message-wrapper ${msg.sender}`;
+                
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message';
+                
+                if (msg.image) {
+                    const img = document.createElement('img');
+                    img.src = msg.image;
+                    messageDiv.appendChild(img);
+                }
+                
+                const textNode = document.createElement('div');
+                textNode.innerText = msg.text;
+                messageDiv.appendChild(textNode);
+                
+                wrapper.appendChild(messageDiv);
+
+                if (msg.sender === 'assistant') {
+                    const copyBtn = document.createElement('button');
+                    copyBtn.className = 'copy-btn';
+                    copyBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+                    copyBtn.onclick = () => navigator.clipboard.writeText(msg.text);
+                    wrapper.appendChild(copyBtn);
+                }
+
+                chatContainer.appendChild(wrapper);
+            });
+
+            chatContainer.appendChild(typingIndicator);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function togglePlusMenu(event) {
+            event.stopPropagation();
+            const menu = document.getElementById('plus-menu');
+            menu.classList.toggle('show');
+        }
+
+        window.onclick = () => {
+            document.getElementById('plus-menu')?.classList.remove('show');
+        };
+
+        function triggerGallery() {
+            document.getElementById('gallery-input').click();
+        }
+
+        function handleImageSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    selectedImageBase64 = e.target.result;
+                    document.getElementById('preview-thumb').src = selectedImageBase64;
+                    document.getElementById('image-preview-container').style.display = 'flex';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function removeSelectedImage() {
+            selectedImageBase64 = null;
+            document.getElementById('image-preview-container').style.display = 'none';
+            document.getElementById('gallery-input').value = '';
+        }
+
+        async function triggerCamera() {
+            const modal = document.getElementById('camera-modal');
+            modal.style.display = 'flex';
+            try {
+                mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                document.getElementById('camera-video').srcObject = mediaStream;
+            } catch (err) {
+                alert("Kamera erişimi sağlanamadı.");
+                closeCameraModal();
+            }
+        }
+
+        function closeCameraModal() {
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+                mediaStream = null;
+            }
+            document.getElementById('camera-modal').style.display = 'none';
+        }
+
+        function takeSnapshot() {
+            const video = document.getElementById('camera-video');
+            const canvas = document.getElementById('camera-canvas');
+            canvas.width = video.videoWidth || 640;
+            canvas.height = video.videoHeight || 480;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            selectedImageBase64 = canvas.toDataURL('image/png');
+            document.getElementById('preview-thumb').src = selectedImageBase64;
+            document.getElementById('image-preview-container').style.display = 'flex';
+            closeCameraModal();
+        }
+
+        async function sendMessage() {
+            const inputEl = document.getElementById('user-input');
+            const text = inputEl.value.trim();
+            if (!text && !selectedImageBase64) return;
+
+            const chat = chats.find(c => c.id === currentChatId);
+            if (!chat) return;
+
+            const userMsg = {
+                sender: 'user',
+                text: text,
+                image: selectedImageBase64
+            };
+
+            chat.messages.push(userMsg);
+            if (allNewChatDefaults.includes(chat.title) && text) {
+                chat.title = text.length > 25 ? text.substring(0, 25) + '...' : text;
+            }
+
+            inputEl.value = '';
+            const imgSnapshot = selectedImageBase64;
+            removeSelectedImage();
+            saveChats();
+            renderMessages();
+            renderChatList();
+
+            const typingIndicator = document.getElementById('typing-indicator');
+            typingIndicator.style.display = 'flex';
+            document.getElementById('chat-container').scrollTop = document.getElementById('chat-container').scrollHeight;
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text, image: imgSnapshot })
+                });
+                const data = await response.json();
+                typingIndicator.style.display = 'none';
+
+                chat.messages.push({
+                    sender: 'assistant',
+                    text: data.reply || "Yanıt alındı."
+                });
+                saveChats();
+                renderMessages();
+            } catch (err) {
+                typingIndicator.style.display = 'none';
+                chat.messages.push({
+                    sender: 'assistant',
+                    text: t('connErr')
+                });
+                saveChats();
+                renderMessages();
+            }
+        }
+
+        function handleAuthClick() {
+            if (window.firebaseAuth?.currentUser) {
+                window.signOutUser().then(() => applyTranslations());
+            } else {
+                document.getElementById('auth-modal').style.display = 'flex';
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('auth-modal').style.display = 'none';
+            resetModalView();
+        }
+
+        function showEmailForm() {
+            document.getElementById('auth-main-options').classList.add('hidden');
+            document.getElementById('email-auth-form').classList.remove('hidden');
+        }
+
+        function showPhoneForm() {
+            document.getElementById('auth-main-options').classList.add('hidden');
+            document.getElementById('phone-auth-form').classList.remove('hidden');
+        }
+
+        function resetModalView() {
+            document.getElementById('auth-main-options').classList.remove('hidden');
+            document.getElementById('email-auth-form').classList.add('hidden');
+            document.getElementById('phone-auth-form').classList.add('hidden');
+        }
+
+        async function loginWithGoogle() {
+            try {
+                await window.signInWithGooglePopup();
+                closeModal();
+                applyTranslations();
+            } catch (err) {
+                alert("Google ile giriş yapılırken bir hata oluştu: " + err.message);
+            }
+        }
+
+        async function submitEmailAuth() {
+            const email = document.getElementById('auth-email').value;
+            const pass = document.getElementById('auth-password').value;
+            if (!email || !pass) {
+                alert("Lütfen e-posta ve şifrenizi girin.");
+                return;
+            }
+            try {
+                await window.signInWithEmail(email, pass);
+            } catch (err) {
+                try {
+                    await window.registerWithEmail(email, pass);
+                } catch (regErr) {
+                    alert("İşlem başarısız: " + regErr.message);
+                    return;
+                }
+            }
+            closeModal();
+            applyTranslations();
+        }
+
+        window.onAuthStateChanged((user) => {
+            applyTranslations();
+        });
+    </script>
+</body>
+</html>
